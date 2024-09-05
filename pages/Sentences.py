@@ -7,6 +7,7 @@ import torch
 import numpy as np
 
 nltk.download('punkt_tab')
+nltk.download('punkt')
 
 @st.cache_resource
 def load_tokenizer():
