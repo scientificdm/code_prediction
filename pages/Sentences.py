@@ -21,7 +21,7 @@ def load_model15_sent():
 # Define tokenizer:
 tokenizer = load_tokenizer()
 
-st.header('Code prediction tool (sentences)', divider='blue')
+st.header('Code prediction (sentences)', divider='blue')
 
 tab1, tab2 = st.tabs(["Segment constructor", "Plain text"])
 

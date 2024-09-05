@@ -24,7 +24,7 @@ def load_model15():
 # Define tokenizer:
 tokenizer = load_tokenizer()
 
-st.header('Code prediction tool (paragraphs)', divider='blue')
+st.header('Code prediction (paragraphs)', divider='blue')
 
 tab1, tab2 = st.tabs(["Segment constructor", "Plain text"])
 
