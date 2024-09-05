@@ -6,6 +6,8 @@ from transformers import BertTokenizer, BertForSequenceClassification
 import torch
 import numpy as np
 
+nltk.download('punkt_tab')
+
 @st.cache_resource
 def load_tokenizer():
     return BertTokenizer.from_pretrained("bert-base-uncased", do_lower_case=True)

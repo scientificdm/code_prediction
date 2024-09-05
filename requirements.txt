@@ -1,6 +1,6 @@
 streamlit
 transformers
 sentencepiece
-nltk==3.8.1
+nltk
 torch
 numpy
