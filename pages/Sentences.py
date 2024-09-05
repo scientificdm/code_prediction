@@ -1,6 +1,7 @@
 # Sentence classification: version with construction + text input
 #
 import streamlit as st
+import nltk
 from nltk.tokenize import sent_tokenize
 from transformers import BertTokenizer, BertForSequenceClassification
 import torch
