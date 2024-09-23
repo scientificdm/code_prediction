@@ -1,14 +1,11 @@
 # Sentence classification: version with construction + text input
 #
 import streamlit as st
-import nltk
 from nltk.tokenize import sent_tokenize
 from transformers import BertTokenizer, BertForSequenceClassification
 import torch
 import numpy as np
-
-nltk.download('punkt_tab')
-nltk.download('punkt')
+import base64
 
 @st.cache_resource
 def load_tokenizer():
@@ -22,10 +19,45 @@ def load_model7_sent():
 def load_model15_sent():
     return BertForSequenceClassification.from_pretrained("koptelovmax/bert-ecozept-sentences-15")
 
+def set_header():
+    LOGO_IMAGE = "agriloop-logo.png"
+
+    st.markdown(
+        """
+        <style>
+        .container {
+            display: flex;
+        }
+        .logo-text {
+            font-weight:700 !important;
+            font-size:50px !important;
+            color: #f9a01b !important;
+            padding-left: 10px !important;
+        }
+        .logo-img {
+            float:right;
+            width: 28%;
+            height: 28%;
+        }
+        </style>
+        """,
+        unsafe_allow_html=True
+    )
+    st.markdown(
+        f"""
+        <div class="container">
+            <img class="logo-img" src="data:image/png;base64,{base64.b64encode(open(LOGO_IMAGE, "rb").read()).decode()}">
+            <p class="logo-text">AgriCode <span style="color:grey;">sentences</span></p>
+        </div>
+        """,
+        unsafe_allow_html=True
+    )
+
 # Define tokenizer:
 tokenizer = load_tokenizer()
 
-st.header('Code prediction (sentences)', divider='blue')
+#st.header('Code prediction tool: sentences', divider='blue')
+set_header()
 
 tab1, tab2 = st.tabs(["Segment constructor", "Plain text"])
 
@@ -197,25 +229,23 @@ with tab1:
          'Do you know further experts about the topic of the interview who would be interested to participate in the survey?'),
         )    
     
-    paragraph = st.text_area(
+    paragraphs = st.text_area(
     "Your paragraph:",
     "Yes, of course! We are producing all sorts of different potato convenient products such as croquettes, french fries, “Croustille”, and a range of different stuffed speciality potato products. But all our products are frozen convenient potato products.  I am working for the department of sustainability, energy and environment of our company and I am responsible for issues related to sustainability, energy, waste, and environment. I am responsible for the valorisation of our potato wastes through our biogas plant.",
     height=160,
     )
        
-    titles = questionnaire+"\n\n"+block_name+"\n\n"+question+"\n\n"
-    paragraph_to_classify = paragraph
+    text_to_classify = questionnaire+"\n\n"+block_name+"\n\n"+question+"\n\n"+paragraphs
         
 with tab2:
     # Plain text:
     segment_text = st.text_area(
     "Text to classify:",
-    titles+paragraph,
+    text_to_classify,
     height=320,
     )
     
-    titles = "\n\n".join(segment_text.split("\n\n")[:3])
-    paragraph_to_classify = segment_text.split("\n\n")[-1:][0]
+    text_to_classify = segment_text
     
 mode = st.radio(
 "Select classifier:",
@@ -230,7 +260,7 @@ if mode == "7 classes":
     model = load_model7_sent()
     model.to('cpu')
     if titles_flag:
-        st.write("You selected 7 class setting with taking titles into account.")
+        st.write("You selected 7 class setting, taking into account titles.")
     else:
         st.write("You selected 7 class setting.")
 else:
@@ -238,7 +268,7 @@ else:
     model = load_model15_sent()
     model.to('cpu')
     if titles_flag:
-        st.write("You selected 15 class setting with taking titles into account.")
+        st.write("You selected 15 class setting, taking into account titles.")
     else:
         st.write("You selected 15 class setting.")
 
@@ -265,84 +295,100 @@ def main():
        
     if st.button('Predict'):
         
-        # Separate paragraph into sentences:
-        segment_sents = sent_tokenize(paragraph_to_classify)
+        # Separate paragraphs:
+        if titles_flag:
+            titles = "\n\n".join(text_to_classify.split("\n\n")[:3])
+            segment_paras = text_to_classify.split("\n\n")[3:]
+        else:
+            segment_paras = text_to_classify.split("\n\n")
         
         col1, col2 = st.columns([2,1], vertical_alignment="top")
 
         with col1:
             # Output result of prediction:
-            sents_highlighted = "**Result or prediction:**  "
-            pred_ids = []
+            st.markdown("**Result or prediction:**")
             
+            sents_highlighted = ""
+
             if mode == "7 classes":
-                for i in range(len(segment_sents)):
+                for j in range(len(segment_paras)):
+                    # Separate paragraph into sentences:
+                    segment_sents = sent_tokenize(segment_paras[j])
+
                     # Predict label for each sentence:
-                    if titles_flag:
-                        code_id = prediction(titles+segment_sents[i])
-                    else:
-                        code_id = prediction(segment_sents[i])
-                    pred_ids.append(code_id)
-                    
-                    # Highlight each sentence w.r.t. legend and predicted code:
-                    if code_id == 1:
-                        sents_highlighted += ":red-background["+segment_sents[i]+"]"
-                    elif code_id == 2:
-                        sents_highlighted += ":blue-background["+segment_sents[i]+"]"
-                    elif code_id == 3:
-                        sents_highlighted += ":green-background["+segment_sents[i]+"]"
-                    elif code_id == 4:
-                        sents_highlighted += ":violet-background["+segment_sents[i]+"]"
-                    elif code_id == 5:
-                        sents_highlighted += ":orange-background["+segment_sents[i]+"]"
-                    elif code_id == 6:
-                        sents_highlighted += ":grey-background["+segment_sents[i]+"]"
-                    else:
-                        sents_highlighted += segment_sents[i]+" "
+                    for i in range(len(segment_sents)):
+                        if titles_flag:
+                            code_id = prediction(titles+"\n\n"+segment_sents[i])
+                        else:
+                            code_id = prediction(segment_sents[i])
                         
-                st.markdown(sents_highlighted)
+                        # Highlight each sentence w.r.t. legend and predicted code:
+                        if code_id == 1:
+                            sents_highlighted += ":red-background["+segment_sents[i]+"]"
+                        elif code_id == 2:
+                            sents_highlighted += ":blue-background["+segment_sents[i]+"]"
+                        elif code_id == 3:
+                            sents_highlighted += ":green-background["+segment_sents[i]+"]"
+                        elif code_id == 4:
+                            sents_highlighted += ":violet-background["+segment_sents[i]+"]"
+                        elif code_id == 5:
+                            sents_highlighted += ":orange-background["+segment_sents[i]+"]"
+                        elif code_id == 6:
+                            sents_highlighted += ":grey-background["+segment_sents[i]+"]"
+                        else:
+                            sents_highlighted += segment_sents[i]+" "
+                    
+                    # Separate paragraphs:        
+                    sents_highlighted += "\n\n"
             else:
-                for i in range(len(segment_sents)):
-                    # Predict label for each sentence:
-                    if titles_flag:
-                        code_id = prediction(titles+segment_sents[i])
-                    else:
-                        code_id = prediction(segment_sents[i])
-                    pred_ids.append(code_id)
+                for j in range(len(segment_paras)):
+                    # Separate paragraph into sentences:
+                    segment_sents = sent_tokenize(segment_paras[j])
                     
-                    # Highlight each sentence w.r.t. legend and predicted code:
-                    if code_id == 1:
-                        sents_highlighted += ":red-background["+segment_sents[i]+"]"
-                    elif code_id == 2:
-                        sents_highlighted += ":blue-background["+segment_sents[i]+"]"
-                    elif code_id == 3:
-                        sents_highlighted += ":green-background["+segment_sents[i]+"]"
-                    elif code_id == 4:
-                        sents_highlighted += ":violet-background["+segment_sents[i]+"]"
-                    elif code_id == 5:
-                        sents_highlighted += ":orange-background["+segment_sents[i]+"]"
-                    elif code_id == 6:
-                        sents_highlighted += ":grey-background["+segment_sents[i]+"]"
-                    elif code_id == 7:
-                        sents_highlighted += ":rainbow-background["+segment_sents[i]+"]"
-                    elif code_id == 8:
-                        sents_highlighted += ":red["+segment_sents[i]+"]"
-                    elif code_id == 9:
-                        sents_highlighted += ":blue["+segment_sents[i]+"]"
-                    elif code_id == 10:
-                        sents_highlighted += ":green["+segment_sents[i]+"]"
-                    elif code_id == 11:
-                        sents_highlighted += ":violet["+segment_sents[i]+"]"
-                    elif code_id == 12:
-                        sents_highlighted += ":orange["+segment_sents[i]+"]"
-                    elif code_id == 13:
-                        sents_highlighted += ":grey["+segment_sents[i]+"]"
-                    elif code_id == 14:
-                        sents_highlighted += ":rainbow["+segment_sents[i]+"]"
-                    else:
-                        sents_highlighted += segment_sents[i]+" "
+                    # Predict label for each sentence:
+                    for i in range(len(segment_sents)):
+                        if titles_flag:
+                            code_id = prediction(titles+"\n\n"+segment_sents[i])
+                        else:
+                            code_id = prediction(segment_sents[i])
                         
-                st.markdown(sents_highlighted)
+                        # Highlight each sentence w.r.t. legend and predicted code:
+                        if code_id == 1:
+                            sents_highlighted += ":red-background["+segment_sents[i]+"]"
+                        elif code_id == 2:
+                            sents_highlighted += ":blue-background["+segment_sents[i]+"]"
+                        elif code_id == 3:
+                            sents_highlighted += ":green-background["+segment_sents[i]+"]"
+                        elif code_id == 4:
+                            sents_highlighted += ":violet-background["+segment_sents[i]+"]"
+                        elif code_id == 5:
+                            sents_highlighted += ":orange-background["+segment_sents[i]+"]"
+                        elif code_id == 6:
+                            sents_highlighted += ":grey-background["+segment_sents[i]+"]"
+                        elif code_id == 7:
+                            sents_highlighted += ":rainbow-background["+segment_sents[i]+"]"
+                        elif code_id == 8:
+                            sents_highlighted += ":red["+segment_sents[i]+"]"
+                        elif code_id == 9:
+                            sents_highlighted += ":blue["+segment_sents[i]+"]"
+                        elif code_id == 10:
+                            sents_highlighted += ":green["+segment_sents[i]+"]"
+                        elif code_id == 11:
+                            sents_highlighted += ":violet["+segment_sents[i]+"]"
+                        elif code_id == 12:
+                            sents_highlighted += ":orange["+segment_sents[i]+"]"
+                        elif code_id == 13:
+                            sents_highlighted += ":grey["+segment_sents[i]+"]"
+                        elif code_id == 14:
+                            sents_highlighted += ":rainbow["+segment_sents[i]+"]"
+                        else:
+                            sents_highlighted += segment_sents[i]+" "
+                            
+                    # Separate paragraphs:        
+                    sents_highlighted += "\n\n"
+            
+            # Output highlighted sentences:                        
+            st.markdown(sents_highlighted)
         
         with col2:
             # Legend:
@@ -372,13 +418,6 @@ def main():
                         :orange[Stakeholders’ expectations > MP]  
                         :grey[valorization > satisfaction]  
                         :rainbow[valorization > advantages]''')
-                
-    #st.markdown('''
-    #:blue-background[Other (not pertinent)]''')
-    
-    #st.markdown('''
-    #:red[Streamlit] :orange[can] :green[write] :blue[text] :violet[in]
-    #:gray[pretty] :rainbow[colors] and :blue-background[highlight] text.''')
             
 if __name__ == "__main__":
     main()

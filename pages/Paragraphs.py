@@ -4,6 +4,7 @@ import streamlit as st
 from transformers import BertTokenizer, BertForSequenceClassification
 import torch
 import numpy as np
+import base64
 
 @st.cache_resource
 def load_tokenizer():
@@ -21,10 +22,46 @@ def load_model7plus():
 def load_model15():
     return BertForSequenceClassification.from_pretrained("koptelovmax/bert-base-ecozept-15")
 
+def set_header():
+    LOGO_IMAGE = "agriloop-logo.png"
+
+    st.markdown(
+        """
+        <style>
+        .container {
+            display: flex;
+        }
+        .logo-text {
+            font-weight:700 !important;
+            font-size:50px !important;
+            color: #f9a01b !important;
+            padding-left: 10px !important;
+        }
+        .logo-img {
+            float:right;
+            width: 28%;
+            height: 28%;
+        }
+        </style>
+        """,
+        unsafe_allow_html=True
+    )
+    st.markdown(
+        f"""
+        <div class="container">
+            <img class="logo-img" src="data:image/png;base64,{base64.b64encode(open(LOGO_IMAGE, "rb").read()).decode()}">
+            <p class="logo-text">AgriCode <span style="color:grey;">paragraphs</span></p>
+        </div>
+        """,
+        unsafe_allow_html=True
+    )
+
 # Define tokenizer:
 tokenizer = load_tokenizer()
 
-st.header('Code prediction (paragraphs)', divider='blue')
+#st.header('Code prediction tool: paragraphs', divider='blue')
+set_header()
+
 
 tab1, tab2 = st.tabs(["Segment constructor", "Plain text"])
 
@@ -196,13 +233,13 @@ with tab1:
          'Do you know further experts about the topic of the interview who would be interested to participate in the survey?'),
         )    
     
-    paragraph = st.text_area(
+    paragraphs = st.text_area(
     "Your paragraph:",
     "Yes, of course! We are producing all sorts of different potato convenient products such as croquettes, french fries, “Croustille”, and a range of different stuffed speciality potato products. But all our products are frozen convenient potato products.  I am working for the department of sustainability, energy and environment of our company and I am responsible for issues related to sustainability, energy, waste, and environment. I am responsible for the valorisation of our potato wastes through our biogas plant.",
     height=160,
     )
     
-    text_to_classify = questionnaire+"\n\n"+block_name+"\n\n"+question+"\n\n"+paragraph
+    text_to_classify = questionnaire+"\n\n"+block_name+"\n\n"+question+"\n\n"+paragraphs
     
 with tab2:
     # Plain text:
@@ -221,9 +258,14 @@ mode = st.radio(
 
 # Select 7 or 15 class setting:
 if mode == "7 classes":
-    # Select augmented classifier:
-    augm = st.checkbox("Improved classifier (data augmentation)", value=True)
-    #augm = st.checkbox("Improved classifier (data augmentation)")
+    col_1, col_2 = st.columns([1,1], vertical_alignment="top")
+
+    with col_1:
+        # Select considering titles:
+        titles_flag = st.checkbox("Take titles into account", value=True)
+    with col_2:
+        # Select augmented classifier:
+        augm = st.checkbox("Improved classifier (data augmentation)", value=True)
     
     # Load model:
     if augm:
@@ -234,14 +276,26 @@ if mode == "7 classes":
         model.to('cpu')
     
     if augm:
-        st.write("You selected 7 class setting with an improved classifier.")
+        if titles_flag:
+            st.write("You have selected the 7-class setting with an improved classifier, taking into account titles.")
+        else:
+            st.write("You have selected the 7-class setting with an improved classifier.")
     else:
-        st.write("You selected 7 class setting.")
+        if titles_flag:
+            st.write("You have selected the 7-class setting, taking into account titles.")
+        else:
+            st.write("You have selected the 7-class setting.")
 else:
+    # Select considering titles:
+    titles_flag = st.checkbox("Take titles into account", value=True)
+        
     # Load model:
     model = load_model15()
     model.to('cpu')
-    st.write("You selected 15 class setting.")
+    if titles_flag:
+        st.write("You have selected the 15-class setting, taking into account titles.")
+    else:
+        st.write("You have selected the 15-class setting.")
 
 def prediction(segment_text):
     test_ids = []
@@ -265,56 +319,116 @@ def prediction(segment_text):
 def main():
        
     if st.button('Predict'):
-        pred_id = prediction(text_to_classify)
-        
-        if mode == "7 classes":
-            if pred_id == 0:
-              pred_label = 'Other (not pertinent)'
-            elif pred_id == 1:
-              pred_label = 'limitations and barriers'
-            elif pred_id == 2:
-              pred_label = 'Stakeholders’ expectations'
-            elif pred_id == 3:
-              pred_label = 'market opportunities'
-            elif pred_id == 4:
-              pred_label = 'valorization'
-            elif pred_id == 5:
-              pred_label = 'company+Experts'
-            elif pred_id == 6:
-              pred_label = 'type of stream'
+        # Separate paragraphs:
+        if titles_flag:
+            titles = "\n\n".join(text_to_classify.split("\n\n")[:3])
+            segment_paras = text_to_classify.split("\n\n")[3:]
         else:
-            if pred_id == 0:
-              pred_label = 'Other (not pertinent)'
-            elif pred_id == 1:
-              pred_label = 'Stakeholders’ expectations > valorization/ PHA-applications'
-            elif pred_id == 2:
-              pred_label = 'limitations and barriers > valorization /PHA-applications'
-            elif pred_id == 3:
-              pred_label = 'market opportunities > PHA MO'
-            elif pred_id == 4:
-              pred_label = 'market opportunities > PHA-Applications MO'
-            elif pred_id == 5:
-              pred_label = 'valorization > current structures'
-            elif pred_id == 6:
-              pred_label = 'company+Experts'
-            elif pred_id == 7:
-              pred_label = 'limitations and barriers > Main issues and challenges for extracted/microbial protein'
-            elif pred_id == 8:
-              pred_label = 'type of stream'
-            elif pred_id == 9:
-              pred_label = 'Stakeholders’ expectations > PHA expectation'
-            elif pred_id == 10:
-              pred_label = 'limitations and barriers > Main issues and challenges for PHA'
-            elif pred_id == 11:
-              pred_label = 'market opportunities > MP MO'
-            elif pred_id == 12:
-              pred_label = 'Stakeholders’ expectations > MP'
-            elif pred_id == 13:
-              pred_label = 'valorization > satisfaction'
-            elif pred_id == 14:
-              pred_label = 'valorization > advantages'  
-              
-        st.write("Predicted code: ", "**"+pred_label+"**")
+            segment_paras = text_to_classify.split("\n\n")
+        
+        col1, col2 = st.columns([2,1], vertical_alignment="top")
+
+        with col1:
+            # Output result of prediction:
+            st.markdown("**Result or prediction:**")
+            
+            paras_highlighted = ""
+            
+            if mode == "7 classes":
+                for i in range(len(segment_paras)):
+                    # Predict label for each paragraph:
+                    if titles_flag:
+                        code_id = prediction(titles+"\n\n"+segment_paras[i])
+                    else:
+                        code_id = prediction(segment_paras[i])
+                    
+                    # Highlight each paragraph w.r.t. legend and predicted code:
+                    if code_id == 1:
+                        paras_highlighted += ":red-background["+segment_paras[i]+"]\n\n"
+                    elif code_id == 2:
+                        paras_highlighted += ":blue-background["+segment_paras[i]+"]\n\n"
+                    elif code_id == 3:
+                        paras_highlighted += ":green-background["+segment_paras[i]+"]\n\n"
+                    elif code_id == 4:
+                        paras_highlighted += ":violet-background["+segment_paras[i]+"]\n\n"
+                    elif code_id == 5:
+                        paras_highlighted += ":orange-background["+segment_paras[i]+"]\n\n"
+                    elif code_id == 6:
+                        paras_highlighted += ":grey-background["+segment_paras[i]+"]\n\n"
+                    else:
+                        paras_highlighted += segment_paras[i]+"\n\n"
+            else:
+                for i in range(len(segment_paras)):
+                    # Predict label for each sentence:
+                    if titles_flag:
+                        code_id = prediction(titles+"\n\n"+segment_paras[i])
+                    else:
+                        code_id = prediction(segment_paras[i])
+                    
+                    # Highlight each sentence w.r.t. legend and predicted code:
+                    if code_id == 1:
+                        paras_highlighted += ":red-background["+segment_paras[i]+"]\n\n"
+                    elif code_id == 2:
+                        paras_highlighted += ":blue-background["+segment_paras[i]+"]\n\n"
+                    elif code_id == 3:
+                        paras_highlighted += ":green-background["+segment_paras[i]+"]\n\n"
+                    elif code_id == 4:
+                        paras_highlighted += ":violet-background["+segment_paras[i]+"]\n\n"
+                    elif code_id == 5:
+                        paras_highlighted += ":orange-background["+segment_paras[i]+"]\n\n"
+                    elif code_id == 6:
+                        paras_highlighted += ":grey-background["+segment_paras[i]+"]\n\n"
+                    elif code_id == 7:
+                        paras_highlighted += ":rainbow-background["+segment_paras[i]+"]\n\n"
+                    elif code_id == 8:
+                        paras_highlighted += ":red["+segment_paras[i]+"]\n\n"
+                    elif code_id == 9:
+                        paras_highlighted += ":blue["+segment_paras[i]+"]\n\n"
+                    elif code_id == 10:
+                        paras_highlighted += ":green["+segment_paras[i]+"]\n\n"
+                    elif code_id == 11:
+                        paras_highlighted += ":violet["+segment_paras[i]+"]\n\n"
+                    elif code_id == 12:
+                        paras_highlighted += ":orange["+segment_paras[i]+"]\n\n"
+                    elif code_id == 13:
+                        paras_highlighted += ":grey["+segment_paras[i]+"]\n\n"
+                    elif code_id == 14:
+                        paras_highlighted += ":rainbow["+segment_paras[i]+"]\n\n"
+                    else:
+                        paras_highlighted += segment_paras[i]+"\n\n"
+            
+            # Output highlighted paragraphs:
+            st.markdown(paras_highlighted)
+        
+        with col2:
+            # Legend:
+            if mode == "7 classes":
+                st.markdown('''**Legend:**  
+                        Other (not pertinent)  
+                        :red-background[limitations and barriers]  
+                        :blue-background[Stakeholders’ expectations]  
+                        :green-background[market opportunities]  
+                        :violet-background[valorization]  
+                        :orange-background[company+Experts]  
+                        :grey-background[type of stream]''')
+            else:
+                st.markdown('''**Legend:**  
+                        Other (not pertinent)  
+                        :red-background[Stakeholders’ expectations > valorization/ PHA-applications]  
+                        :blue-background[limitations and barriers > valorization /PHA-applications]  
+                        :green-background[market opportunities > PHA MO]  
+                        :violet-background[market opportunities > PHA-Applications MO]  
+                        :orange-background[valorization > current structures]  
+                        :grey-background[company+Experts]  
+                        :rainbow-background[limitations and barriers > Main issues and challenges for extracted/microbial protein]  
+                        :red[type of stream]  
+                        :blue[Stakeholders’ expectations > PHA expectation]  
+                        :green[limitations and barriers > Main issues and challenges for PHA]  
+                        :violet[market opportunities > MP MO]  
+                        :orange[Stakeholders’ expectations > MP]  
+                        :grey[valorization > satisfaction]  
+                        :rainbow[valorization > advantages]''')
+        #st.write("Predicted code: ", "**"+pred_label+"**")
     
 if __name__ == "__main__":
     main()
