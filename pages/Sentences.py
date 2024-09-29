@@ -8,6 +8,11 @@ import torch
 import numpy as np
 import base64
 
+st.set_page_config(
+    page_title="AgriCode",
+    page_icon="icon.png"
+)
+
 nltk.download('punkt_tab')
 nltk.download('punkt')
 
@@ -235,7 +240,8 @@ with tab1:
     
     paragraphs = st.text_area(
     "Your paragraph:",
-    "Yes, of course! We are producing all sorts of different potato convenient products such as croquettes, french fries, “Croustille”, and a range of different stuffed speciality potato products. But all our products are frozen convenient potato products.  I am working for the department of sustainability, energy and environment of our company and I am responsible for issues related to sustainability, energy, waste, and environment. I am responsible for the valorisation of our potato wastes through our biogas plant.",
+    "Yes, of course! We are producing all sorts of different potato convenient products such as croquettes, french fries, “Croustille”, and a range of different stuffed speciality potato products. But all our products are frozen convenient potato products.  I am working for the department of sustainability, energy and environment of our company and I am responsible for issues related to sustainability, energy, waste, and environment. I am responsible for the valorisation of our potato wastes through our biogas plant.\n\n"
+    "We are very happy with our current valorisation process. The valorisation is connected to a decent amount of effort but it is working really well. It is very important for us to get rid of the residues from our food production operation as quick as possible and we are more or less able to feed the residues into the biogas plant the moment the waste accumulates. The waste from the processing has to be removed continuously and this works very well. The residues of the biogas plant also need to be disposed every day and this works really well as well. Our cooperation with the logistics company works flawless and this is really important to us as we are not able to store the residues. They would need to be stored inside and this would be very costly as the hygiene would be an issue.",
     height=160,
     )
        
@@ -403,7 +409,7 @@ def main():
                         :blue-background[Stakeholders’ expectations]  
                         :green-background[market opportunities]  
                         :violet-background[valorization]  
-                        :orange-background[company+Experts]  
+                        :orange-background[company+experts]  
                         :grey-background[type of stream]''')
             else:
                 st.markdown('''**Legend:**  
@@ -413,7 +419,7 @@ def main():
                         :green-background[market opportunities > PHA MO]  
                         :violet-background[market opportunities > PHA-Applications MO]  
                         :orange-background[valorization > current structures]  
-                        :grey-background[company+Experts]  
+                        :grey-background[company+experts]  
                         :rainbow-background[limitations and barriers > Main issues and challenges for extracted/microbial protein]  
                         :red[type of stream]  
                         :blue[Stakeholders’ expectations > PHA expectation]  
