@@ -404,7 +404,7 @@ def main():
             # Legend:
             if mode == "7 classes":
                 st.markdown('''**Legend:**  
-                        other (not pertinent)  
+                        Other (not pertinent)  
                         :red-background[limitations and barriers]  
                         :blue-background[stakeholders’ expectations]  
                         :green-background[market opportunities]  
@@ -413,7 +413,7 @@ def main():
                         :grey-background[type of stream]''')
             else:
                 st.markdown('''**Legend:**  
-                        other (not pertinent)  
+                        Other (not pertinent)  
                         :red-background[stakeholders’ expectations > valorization/ PHA-applications]  
                         :blue-background[limitations and barriers > valorization /PHA-applications]  
                         :green-background[market opportunities > PHA MO]  
