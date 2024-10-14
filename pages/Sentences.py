@@ -37,7 +37,7 @@ def load_model_15_sent_augm():
     return BertForSequenceClassification.from_pretrained("koptelovmax/bert-ecozept-sents-augm-15")
 
 def set_header():
-    LOGO_IMAGE = "agriloop-logo.png"
+    LOGO_IMAGE = "logo.png"
 
     st.markdown(
         """

@@ -2,7 +2,7 @@ import streamlit as st
 import base64
 
 def set_header():
-    LOGO_IMAGE = "agriloop-logo.png"
+    LOGO_IMAGE = "logo.png"
 
     st.markdown(
         """
